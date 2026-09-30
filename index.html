@@ -564,13 +564,19 @@ input[type="range"] { width: 100%; accent-color: var(--tinta-2); height: 44px; }
 /* botao flutuante e painel de compartilhar */
 .fab {
   position: fixed; right: 16px; bottom: 16px; z-index: 70;
-  display: inline-flex; align-items: center; gap: var(--esp-2); height: 52px; padding: 0 var(--esp-5);
+  display: inline-flex; align-items: center; justify-content: center; height: 52px; min-width: 52px; padding: 0 13px;
   border: 2px solid var(--tinta-2); border-radius: var(--raio-pilula);
   background: var(--amarelo); color: var(--tinta-2); font-weight: 700; font-size: var(--texto-md);
   box-shadow: var(--sombra-suave);
-  transition: transform var(--rapido) var(--curva), background var(--rapido), color var(--rapido);
+  transition: transform 250ms var(--curva), opacity 250ms var(--curva), background var(--rapido), color var(--rapido);
 }
 .fab:hover { background: var(--tinta-2); color: var(--amarelo); transform: translateY(-2px); }
+/* O texto aparece na primeira abertura e depois recolhe para dentro do icone. Ao passar o mouse ou focar, volta a aparecer. */
+.fab span { max-width: 9rem; margin-left: 8px; overflow: hidden; white-space: nowrap; transition: max-width 300ms var(--curva), margin 300ms var(--curva), opacity 200ms; }
+.fab.compacto span { max-width: 0; margin-left: 0; opacity: 0; }
+.fab.compacto:hover span, .fab.compacto:focus-visible span { max-width: 9rem; margin-left: 8px; opacity: 1; }
+/* Some enquanto a pagina rola e reaparece quando ela para. */
+.fab.oculto { transform: translateY(18px) scale(0.85); opacity: 0; pointer-events: none; }
 .fab svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 body.modal-aberto { overflow: hidden; }
 body.modal-aberto .fab { display: none; }
@@ -940,7 +946,7 @@ body.modal-aberto .fab { display: none; }
   </div>
 </nav>
 
-<button type="button" class="fab" id="fab" aria-haspopup="dialog" hidden>
+<button type="button" class="fab" id="fab" aria-haspopup="dialog" aria-label="Compartilhar" hidden>
   <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.6l6.8-4M8.6 13.4l6.8 4"/></svg>
   <span>Compartilhar</span>
 </button>
@@ -3812,6 +3818,16 @@ var qrcode = function() {
   if (ordemViews.length) {
     var fab = $('fab'), modal = $('shareModal'), viewAtual = ordemViews[0], focoAnterior = null;
     fab.hidden = false;
+    // Na primeira abertura o texto aparece e, depois de alguns segundos, recolhe para o icone.
+    setTimeout(function () { fab.classList.add('compacto'); }, 4500);
+    // O botao some enquanto a pagina rola e reaparece quando ela para.
+    var fabTimer = null;
+    window.addEventListener('scroll', function () {
+      if ($('shareModal').classList.contains('aberto') || document.activeElement === fab) return;
+      fab.classList.add('oculto');
+      clearTimeout(fabTimer);
+      fabTimer = setTimeout(function () { fab.classList.remove('oculto'); }, 500);
+    }, { passive: true });
     var abasEl = $('shareAbas');
     if (ordemViews.length > 1) {
       abasEl.hidden = false;
